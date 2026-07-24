@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = "https://codenpost-backend.onrender.com/api";
 const token = localStorage.getItem("token");
 
 if (!token) window.location.href = "index.html";
@@ -49,7 +49,15 @@ document.getElementById("saveAccountsBtn").addEventListener("click", async () =>
       body: JSON.stringify({ githubUsername, leetcodeUsername }),
     });
     const data = await res.json();
-    statusEl.textContent = res.ok ? "Saved!" : data.error || "Failed to save.";
+    if (res.ok) {
+      statusEl.textContent =
+        data.deletedDraftCount > 0
+          ? `Saved! Cleared ${data.deletedDraftCount} old draft(s) from the previous account.`
+          : "Saved!";
+      loadPosts();
+    } else {
+      statusEl.textContent = data.error || "Failed to save.";
+    }
   } catch (err) {
     statusEl.textContent = "Could not reach the server. Is the backend running?";
   } finally {
