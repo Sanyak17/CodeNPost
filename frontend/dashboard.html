@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeNPost — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="terminal terminal-wide">
+    <div class="terminal-bar">
+      <div class="terminal-dots"><span></span><span></span><span></span></div>
+      <div class="terminal-path">~/codenpost — dashboard</div>
+    </div>
+    <div class="terminal-body">
+      <h1>dashboard</h1>
+      <p class="subtitle">commits and solves, turned into posts</p>
+
+      <h2><span class="step-num">1</span>connect accounts</h2>
+      <label for="githubInput">github username</label>
+      <input type="text" id="githubInput" class="input-narrow" placeholder="octocat" />
+      <label for="leetcodeInput">leetcode username</label>
+      <input type="text" id="leetcodeInput" class="input-narrow" placeholder="optional" />
+      <button id="saveAccountsBtn">save</button>
+      <p id="accountsStatus" class="status-line"></p>
+
+      <h2><span class="step-num">2</span>linkedin</h2>
+      <p id="linkedinStatus" class="status-line" style="margin-top:0;">checking...</p>
+      <button id="connectLinkedinBtn" class="secondary">connect linkedin</button>
+
+      <h2><span class="step-num">3</span>generate</h2>
+      <button id="generateBtn">generate from recent activity</button>
+      <p id="generateStatus" class="status-line"></p>
+
+      <h2><span class="step-num">4</span>your posts</h2>
+      <div id="postsList"></div>
+    </div>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
