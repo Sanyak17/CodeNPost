@@ -48,6 +48,7 @@ Formatting guidance:
 - Keep it between 100-180 words - enough room to cover both sources with real detail, but still a scannable LinkedIn post, not an essay.
 - Reference specific commit messages, repo names, or problem titles directly rather than vague summaries like "worked on various things."
 - Avoid generic filler phrases like "excited to share" or "grateful for the journey" unless the data specifically supports that tone.
+- CRITICAL: Do not characterize whether something "improved" or "got better/worse" (e.g. runtime, performance, efficiency) unless the data unambiguously shows that direction. If numbers in the data are unclear, mixed, or you're not confident which direction they indicate, describe the action neutrally (e.g. "updated the runtime approach" or "revisited the solution") instead of claiming a specific outcome that isn't clearly supported.
 - Max 3 hashtags at the very end.
 ${customInstruction ? `\nAdditional instructions from the user - follow these closely, even if they override the guidance above: ${customInstruction}` : ""}
 
