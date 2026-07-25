@@ -153,7 +153,7 @@ function renderCurrentPost() {
         <button class="secondary deletePostBtn" data-id="${post._id}" style="padding:4px 10px; font-size:11px;">delete</button>
       </div>
       ${post.status === "failed" && post.errorMessage ? `<p class="error" style="margin-top:8px;">${post.errorMessage}</p>` : ""}
-      <textarea rows="4" data-id="${post._id}" style="margin-top:12px;">${post.generatedText}</textarea>
+      <textarea rows="8" data-id="${post._id}" style="margin-top:12px; resize:vertical;">${post.generatedText}</textarea>
       ${
         post.status === "draft"
           ? `<input type="text" class="regenInput" data-id="${post._id}" placeholder="e.g. make it more casual, focus only on leetcode, make it shorter" style="margin-bottom:8px;" />
@@ -179,6 +179,18 @@ function renderCurrentPost() {
       renderCurrentPost();
     }
   });
+
+  // Auto-resize the textarea to fit its content exactly, so the full post
+  // is readable without scrolling inside a tiny box.
+  const textarea = document.querySelector("textarea");
+  if (textarea) {
+    const resize = () => {
+      textarea.style.height = "auto";
+      textarea.style.height = textarea.scrollHeight + "px";
+    };
+    resize();
+    textarea.addEventListener("input", resize);
+  }
 
   attachCardActionListeners();
 }
