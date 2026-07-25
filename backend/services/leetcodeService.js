@@ -27,6 +27,7 @@ async function fetchRecentSubmissions(leetcodeUsername) {
         title
         titleSlug
         timestamp
+        lang
       }
     }
   `;
@@ -39,13 +40,14 @@ async function fetchRecentSubmissions(leetcodeUsername) {
 
     const { data } = await axios.post(LEETCODE_GRAPHQL, {
       query,
-      variables: { username: leetcodeUsername, limit: 10 },
+      variables: { username: leetcodeUsername, limit: 15 },
     });
 
     const list = data?.data?.recentAcSubmissionList || [];
     return list.map((item) => ({
       title: item.title,
-      difficulty: null, // would require a second query per-problem to get difficulty
+      lang: item.lang || null,
+      timestamp: item.timestamp ? new Date(item.timestamp * 1000) : null,
     }));
   } catch (err) {
     if (err.message.includes("not found")) throw err;
