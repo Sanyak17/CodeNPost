@@ -9,6 +9,27 @@ CodeNPost fetches your recent GitHub commits and LeetCode solves, uses AI to tur
 
 > Note: the backend is hosted on a free tier that spins down after ~15 minutes of inactivity. The first request after idle time may take 30-60 seconds while it wakes back up.
 
+## Screenshots
+
+<table>
+<tr>
+<td><img src="screenshots/login.png" alt="Login page" width="400"/></td>
+<td><img src="screenshots/dashboard.png" alt="Dashboard" width="400"/></td>
+</tr>
+<tr>
+<td align="center"><em>Login</em></td>
+<td align="center"><em>Dashboard — connect accounts, LinkedIn, generate</em></td>
+</tr>
+<tr>
+<td><img src="screenshots/draft-view.png" alt="Draft with regenerate and publish" width="400"/></td>
+<td><img src="screenshots/signup.png" alt="Signup page" width="400"/></td>
+</tr>
+<tr>
+<td align="center"><em>Draft review — edit, regenerate, or publish</em></td>
+<td align="center"><em>Signup</em></td>
+</tr>
+</table>
+
 ---
 
 ## Why this exists
