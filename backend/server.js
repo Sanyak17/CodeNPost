@@ -19,6 +19,14 @@ app.use("/api/accounts", accountsRoutes);
 app.use("/api/linkedin", linkedinRoutes);
 app.use("/api/posts", postsRoutes);
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "CodeNPost API is running",
+    frontend: "https://code-n-post.vercel.app",
+    health: "/api/health",
+  });
+});
+
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 const PORT = process.env.PORT || 5000;
