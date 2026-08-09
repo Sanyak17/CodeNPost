@@ -1,13 +1,17 @@
-const OpenAI = require("openai");
+const axios = require("axios");
 
-const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 /**
- * Builds a prompt from raw commit/LeetCode data and asks OpenAI
- * to produce a short, professional LinkedIn post.
+ * Calls Gemini directly via REST instead of the @google/generative-ai SDK.
+ * That SDK is now legacy/deprecated and doesn't correctly support the newer
+ * "Auth key" format (keys starting with AQ.) that Google AI Studio issues by
+ * default as of mid-2026 - it was sending the key in a way the API
+ * interpreted as an unsupported OAuth token, causing a 401
+ * ACCESS_TOKEN_TYPE_UNSUPPORTED error even with a completely valid key.
+ * Calling the REST endpoint directly with the key in the `x-goog-api-key`
+ * header (exactly as Google's own docs show) avoids that SDK-specific bug
+ * entirely.
  */
 async function generatePost({ commits, leetcodeSolved, customInstruction }) {
   const commitSummary = commits
@@ -56,14 +60,22 @@ Write the LinkedIn post now. Return only the post text, nothing else.
 `;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 400,
-    });
-    return response.choices[0].message.content.trim();
+    const response = await axios.post(
+      GEMINI_API_URL,
+      { contents: [{ parts: [{ text: prompt }] }] },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
+        },
+      }
+    );
+
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Gemini returned no usable text in the response");
+    return text.trim();
   } catch (err) {
-    console.error("[AIService] generation failed:", err.message);
+    console.error("[AIService] generation failed:", err.response?.data || err.message);
     throw new Error("AI generation failed");
   }
 }
