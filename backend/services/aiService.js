@@ -58,25 +58,37 @@ ${customInstruction ? `\nAdditional instructions from the user - follow these cl
 
 Write the LinkedIn post now. Return only the post text, nothing else.
 `;
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await axios.post(
+        GEMINI_API_URL,
+        { contents: [{ parts: [{ text: prompt }] }] },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY,
+          },
+        }
+      );
 
-  try {
-    const response = await axios.post(
-      GEMINI_API_URL,
-      { contents: [{ parts: [{ text: prompt }] }] },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY,
-        },
+      const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error("Gemini returned no usable text in the response");
+      return text.trim();
+    } catch (err) {
+      const status = err.response?.status;
+      const retryable = status === 503 || status === 429 || status === 500;
+      console.error(
+        `[AIService] attempt ${attempt}/${maxAttempts} failed:`,
+        err.response?.data || err.message
+      );
+
+      if (retryable && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, attempt * 2500)); // 2.5s, then 5s
+        continue;
       }
-    );
-
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error("Gemini returned no usable text in the response");
-    return text.trim();
-  } catch (err) {
-    console.error("[AIService] generation failed:", err.response?.data || err.message);
-    throw new Error("AI generation failed");
+      throw new Error("AI generation failed");
+    }
   }
 }
 
