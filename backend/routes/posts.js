@@ -96,18 +96,24 @@ router.put("/:id", protect, async (req, res) => {
 router.post("/:id/regenerate", protect, async (req, res) => {
   try {
     const { instruction } = req.body;
-    const post = await Post.findOne({ _id: req.params.id, user: req.userId, status: "draft" });
-    if (!post) return res.status(404).json({ error: "Draft not found" });
+    const original = await Post.findOne({ _id: req.params.id, user: req.userId, status: "draft" });
+    if (!original) return res.status(404).json({ error: "Draft not found" });
 
     const generatedText = await aiService.generatePost({
-      commits: post.sourceData.commits || [],
-      leetcodeSolved: post.sourceData.leetcodeSolved || [],
+      commits: original.sourceData.commits || [],
+      leetcodeSolved: original.sourceData.leetcodeSolved || [],
       customInstruction: instruction,
     });
 
-    post.generatedText = generatedText;
-    await post.save();
-    res.json(post);
+    // Keep the original draft, and create a new one from the same source data
+    const newPost = await Post.create({
+      user: req.userId,
+      sourceData: original.sourceData,
+      generatedText,
+      status: "draft",
+    });
+
+    res.status(201).json(newPost);
   } catch (err) {
     res.status(500).json({ error: "Failed to regenerate", details: err.message });
   }
