@@ -1,17 +1,15 @@
 const axios = require("axios");
 
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+const GEMINI_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest"];
+const geminiUrl = (model) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 /**
  * Calls Gemini directly via REST instead of the @google/generative-ai SDK.
- * That SDK is now legacy/deprecated and doesn't correctly support the newer
- * "Auth key" format (keys starting with AQ.) that Google AI Studio issues by
- * default as of mid-2026 - it was sending the key in a way the API
- * interpreted as an unsupported OAuth token, causing a 401
- * ACCESS_TOKEN_TYPE_UNSUPPORTED error even with a completely valid key.
- * Calling the REST endpoint directly with the key in the `x-goog-api-key`
- * header (exactly as Google's own docs show) avoids that SDK-specific bug
- * entirely.
+ * That SDK is legacy and doesn't correctly support the newer "AQ." key format,
+ * so the key is sent in the `x-goog-api-key` header, as Google's docs show.
+ * Tries the main model first, then falls back to a lighter one if Google
+ * reports high demand (503) or the model is unavailable (404).
  */
 async function generatePost({ commits, leetcodeSolved, customInstruction }) {
   const commitSummary = commits
@@ -58,38 +56,41 @@ ${customInstruction ? `\nAdditional instructions from the user - follow these cl
 
 Write the LinkedIn post now. Return only the post text, nothing else.
 `;
-  const maxAttempts = 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const response = await axios.post(
-        GEMINI_API_URL,
-        { contents: [{ parts: [{ text: prompt }] }] },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY,
-          },
-        }
-      );
 
-      const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("Gemini returned no usable text in the response");
-      return text.trim();
-    } catch (err) {
-      const status = err.response?.status;
-      const retryable = status === 503 || status === 429 || status === 500;
-      console.error(
-        `[AIService] attempt ${attempt}/${maxAttempts} failed:`,
-        err.response?.data || err.message
-      );
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await axios.post(
+          geminiUrl(model),
+          { contents: [{ parts: [{ text: prompt }] }] },
+          {
+            timeout: 15000,
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": process.env.GEMINI_API_KEY,
+            },
+          }
+        );
 
-      if (retryable && attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, attempt * 2500)); // 2.5s, then 5s
-        continue;
+        const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error("Gemini returned no usable text in the response");
+        return text.trim();
+      } catch (err) {
+        const status = err.response?.status;
+        console.error(
+          `[AIService] ${model} attempt ${attempt} failed:`,
+          err.response?.data || err.message
+        );
+
+        if (status === 404) break; // model unavailable, move to the next model
+        const retryable = !status || status === 503 || status === 429 || status === 500;
+        if (!retryable) throw new Error("AI generation failed");
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
       }
-      throw new Error("AI generation failed");
     }
   }
+
+  throw new Error("AI generation failed");
 }
 
 module.exports = { generatePost };
